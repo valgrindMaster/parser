@@ -2,7 +2,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.utils.cell import column_index_from_string
 
 # Load spreadsheet for data processing.
-wb = load_workbook('data.xlsx')
+wb = load_workbook('Data1.xlsx')
 
 # Get spreadsheet.
 ws = wb['Combined PowerGen CUAP and RS -']
