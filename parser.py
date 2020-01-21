@@ -5,14 +5,12 @@ from openpyxl.utils.cell import column_index_from_string
 wb = load_workbook('Data1.xlsx')
 
 # Get spreadsheet.
-ws = wb['Combined PowerGen CUAP and RS -']
+ws = wb.worksheets[0]
 
 # Mark all header starting indexes.
 headerStartingIndexes = []
 
 for cell in ws[1]:
-  if cell.column < 8:
-    continue
   if cell.value:
     headerStartingIndexes.append(cell.column)
 
