@@ -1,5 +1,5 @@
 from openpyxl import Workbook, load_workbook
-from openpyxl.utils import get_column_letter
+from openpyxl.utils.cell import column_index_from_string
 
 # Load spreadsheet for data processing.
 wb = load_workbook('data.xlsx')
@@ -16,41 +16,34 @@ for cell in ws[1]:
   if cell.value:
     headerStartingIndexes.append(cell.column)
 
-# Create copy of worksheet for editing.
-ws2 = wb.copy_worksheet(ws)
-ws2.delete_rows(2)
-
 # There are certain headers that actually utilize their full width of columns, so skip those.
-headerExceptions = ['AL']
+headerExceptions = [column_index_from_string('AL')]
 columnOffset = 0
 
 headerStartingIndexesLen = len(headerStartingIndexes)
 
 for i in range(headerStartingIndexesLen):
-  print('~' + str(i // headerStartingIndexesLen), '% Complete.')
-  colStart = headerStartingIndexes[i]
-  colEnd = ws.max_column if (i == headerStartingIndexesLen - 1) else headerStartingIndexes[i + 1]
+  print(str(round((i / headerStartingIndexesLen) * 100, 2)), '% Complete.', end='\r')
 
-  if get_column_letter(colStart) in headerExceptions:
+  colStart = headerStartingIndexes[i] - columnOffset
+  colEnd = ((ws.max_column if (i == headerStartingIndexesLen - 1) else headerStartingIndexes[i + 1]) - 1) - columnOffset
+
+  if abs(colStart - colEnd) == 0 or colStart + columnOffset in headerExceptions:
     continue
-
-  columnOffsetUpdated = False
 
   for j in range(2, ws.max_row):
     combinedCellValues = set()
     for k in range(colStart, colEnd):
-      value = ws.cell(row = j, column = k).value
+      value = ws.cell(row = j, column = k + 1).value
       if value != None:
         value = str(value).strip().replace(r'^[\r\n\t]*\b|\b[\r\n\t]*$', '')
         combinedCellValues.add(value)
     if len(combinedCellValues) > 0:
-      ws2.cell(row = j, column = colStart, value = (', '.join(combinedCellValues)))
-      ws2.delete_cols(colStart - columnOffset, colEnd - columnOffset)
-      if not columnOffsetUpdated:
-        columnOffset += abs(colStart - colEnd) - 1
-        columnOffsetUpdated = True
+      ws.cell(row = j, column = colStart, value = (', '.join(combinedCellValues)))
+  
+  delColStart = colStart + 1
+  amount = abs(colStart - colEnd)
+  ws.delete_cols(delColStart, amount)
+  columnOffset += amount
 
-newWb = Workbook()
-newWb.copy_worksheet(ws2)
-
-newWb.save('temp.xlsx')
+wb.save('final.xlsx')
